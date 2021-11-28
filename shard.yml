@@ -1,0 +1,11 @@
+name: wasmer
+version: 0.1.0
+
+authors:
+  - Ali Naqvi <syed.alinaqvi@gmail.com>
+description: |
+  A complete and mature WebAssembly runtime for Crystal based on Wasmer
+
+crystal: 1.2.2
+
+license: MIT

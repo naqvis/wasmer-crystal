@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * 6'
+jobs:
+  build:
+    name: Build and Test
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Setup Wasmer
+      uses: wasmerio/setup-wasmer@v1    
+    - uses: actions/checkout@v2
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1
+    - name: Run tests
+      run: crystal spec
+    - name: Check formatting
+      run: crystal tool format --check      
+    - name: Generate docs
+      run: crystal doc
+    - name: Deploy
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: docs
+        SINGLE_COMMIT: true
