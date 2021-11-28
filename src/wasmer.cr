@@ -1,6 +1,6 @@
 # A complete and mature WebAssembly runtime for Crystal based on [Wasmer](https://wasmer.io/).
 module Wasmer
-  VERSION = "0.1.0"
+  VERSION = "0.2.0"
 
   class WasmerError < Exception
   end
