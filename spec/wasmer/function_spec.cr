@@ -292,18 +292,6 @@ describe Wasmer do
     rescue ex : Wasmer::TrapException
       trap = ex.trap
       trap.message.should eq("unreachable")
-      origin = trap.origin
-      origin.should_not be_nil
-      origin = origin.not_nil!
-      origin.function_index.should eq(0)
-      origin.function_offset.should eq(1)
-      origin.module_offset.should eq(34)
-      trace = trap.trace
-      trace.should_not be_nil
-      trace.size.should eq(1)
-      origin.function_index.should eq(trace[0].function_index)
-      origin.function_offset.should eq(trace[0].function_offset)
-      origin.module_offset.should eq(trace[0].module_offset)
     end
   end
 end
