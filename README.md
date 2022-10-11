@@ -74,7 +74,7 @@ module. Wasmer comes with many engines and compilers.
 
    ```yaml
    dependencies
-     wasmer-crystal:
+     wasmer:
        github: naqvis/wasmer-crystal
    ```
 
