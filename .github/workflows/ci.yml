@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Setup Wasmer
-      uses: wasmerio/setup-wasmer@v1
+      uses: wasmerio/setup-wasmer@v2
       with:
         version: '2.0.0'
     - uses: actions/checkout@v2
