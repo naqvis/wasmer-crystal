@@ -42,11 +42,13 @@ module Wasmer
     include WithExtern
 
     def initialize(store : Store, type : MemoryType)
+      @owner = true
       @ptr = LibWasmer.wasm_memory_new(store, type)
     end
 
     # :nodoc:
     protected def initialize(@ptr : LibWasmer::WasmMemoryT)
+      @owner = false
     end
 
     # Returns memory's MemoryType
@@ -73,7 +75,7 @@ module Wasmer
 
     # Grows the Memory's size by a given number of `Pages` (the delta)
     def grow(delta : Pages) : Bool
-      LibWasmer.wasm_memory_grow(self, delta)
+      LibWasmer.wasm_memory_grow(self, delta.to_u32)
     end
 
     # Returns the view of memory starting from provided offset
@@ -95,7 +97,7 @@ module Wasmer
 
     # :nodoc:
     def finalize
-      return if @ptr.null?
+      return if @ptr.null? || !@owner
       LibWasmer.wasm_memory_delete(self)
     end
   end

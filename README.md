@@ -33,15 +33,14 @@ A complete and mature WebAssembly runtime for Crystal based on
 
 **Features**
 
-  * **Easy to use**: The `wasmer` API mimics the standard WebAssembly API,
-  * **Fast**: `wasmer` executes the WebAssembly modules as fast as
-    possible, close to **native speed**,
-  * **Safe**: All calls to WebAssembly will be fast, but more
-    importantly, completely safe and sandboxed.
+- **Easy to use**: The `wasmer` API mimics the standard WebAssembly API,
+- **Fast**: `wasmer` executes the WebAssembly modules as fast as
+  possible, close to **native speed**,
+- **Safe**: All calls to WebAssembly will be fast, but more
+  importantly, completely safe and sandboxed.
 
 **Documentation**: [browse the detailed API
-documentation]( https://naqvis.github.io/wasmer-crystal/)
-
+documentation](https://naqvis.github.io/wasmer-crystal/)
 
 **Examples** as tutorials: [browser the `examples/`
 directory](https://github.com/naqvis/wasmer-crystal/tree/main/examples),
@@ -49,11 +48,10 @@ it's the best place for a complete introduction!
 
 <br/>
 
-> **_NOTE:_** 
-Shard assumes you have [wasmer](https://github.com/wasmerio/wasmer) runtime version 2.XX installed and environment variable **`WASMER_DIR`** is setup properly, or you will encounter issues during compilation.
+> **_NOTE:_**
+> Shard assumes you have [wasmer](https://github.com/wasmerio/wasmer) runtime latest version 7.XX or above installed and environment variable **`WASMER_DIR`** is setup properly, or you will encounter issues during compilation.
 
 <br/>
-
 
 # Quick Introduction
 
@@ -116,7 +114,7 @@ Then, we can execute it in Crystal:
 require "wasmer"
 
 # Let's define the engine, that holds the compiler.
-engine = Wasmer::Engine.new 
+engine = Wasmer::Engine.new
 
 # Let's define the store, that holds the engine, that holds the compiler.
 store = Wasmer::Store.new(engine)
@@ -131,7 +129,7 @@ module_ = Wasmer::Module.new store, File.read("#{__DIR__}/simple.wasm")
 instance = Wasmer::Instance.new module_
 
 # get the exported `sum` function
-# function methods returns nil if it can't find the requested function. we know its there, so let's add `not_nil!` 
+# function methods returns nil if it can't find the requested function. we know its there, so let's add `not_nil!`
 sum = instance.function("sum").not_nil!
 
 # Call the exported `sum` function with Crystal standard values. The WebAssembly
@@ -148,6 +146,7 @@ $ crystal examples/appendices/simple.cr
 ```
 
 ## Development
+
 To run all tests
 
 `crystal spec`

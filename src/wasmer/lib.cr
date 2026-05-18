@@ -1,9 +1,9 @@
 module Wasmer
-  @[Link(ldflags: "-Wl,-rpath,`$WASMER_DIR/bin/wasmer config --libdir`")]
-  @[Link(ldflags: "`$WASMER_DIR/bin/wasmer config --libs`")]
+  @[Link(ldflags: "-Wl,-rpath,`$WASMER_DIR7/bin/wasmer config --libdir`")]
+  @[Link(ldflags: "`$WASMER_DIR7/bin/wasmer config --libs`")]
   lib LibWasmer
-    WASMER_VERSION_MAJOR = 2
-    WASMER_VERSION_MINOR = 0
+    WASMER_VERSION_MAJOR = 7
+    WASMER_VERSION_MINOR = 1
     WASMER_VERSION_PATCH = 0
 
     alias IntPtr = LibC::Long*
@@ -492,33 +492,47 @@ module Wasmer
     fun wasi_config_new(program_name : LibC::Char*) : WasiConfigT
     fun wasi_config_preopen_dir(config : WasiConfigT, dir : LibC::Char*) : Bool
     fun wasi_env_delete(_state : WasiEnvT)
-    fun wasi_env_new(config : WasiConfigT) : WasiEnvT
+    # wasi_env_new takes store as first argument
+    fun wasi_env_new(store : WasmStoreT, config : WasiConfigT) : WasiEnvT
+    fun wasi_env_initialize_instance(wasi_env : WasiEnvT, store : WasmStoreT, instance : WasmInstanceT) : Bool
     fun wasi_env_read_stderr(env : WasiEnvT, buffer : LibC::Char*, buffer_len : LibC::ULong) : LibC::Long
-
     fun wasi_env_read_stdout(env : WasiEnvT, buffer : LibC::Char*, buffer_len : LibC::ULong) : LibC::Long
-    fun wasi_get_imports(store : WasmStoreT, module : WasmModuleT, wasi_env : WasiEnvT, imports : WasmExternVecT*) : Bool
+    # wasi_get_imports: store arg is first, wasi_env second
+    fun wasi_get_imports(_store : WasmStoreT, wasi_env : WasiEnvT, module : WasmModuleT, imports : WasmExternVecT*) : Bool
     fun wasi_get_start_function(instance : WasmInstanceT) : WasmFuncT
-    fun wasi_get_unordered_imports(store : WasmStoreT, module : WasmModuleT, wasi_env : WasiEnvT, imports : WasmerNamedExternVecT*) : Bool
+    # wasi_get_unordered_imports: no longer takes store
+    fun wasi_get_unordered_imports(wasi_env : WasiEnvT, module : WasmModuleT, imports : WasmerNamedExternVecT*) : Bool
+
+    # WASI filesystem support (webc_runner feature)
+    struct WasiFilesystemT
+      ptr : LibC::Char*
+      size : LibC::SizeT
+    end
+    fun wasi_env_with_filesystem(config : WasiConfigT, store : WasmStoreT, module : WasmModuleT, fs : WasiFilesystemT*, imports : WasmExternVecT*, package : LibC::Char*) : WasiEnvT
+    fun wasi_filesystem_init_static_memory(volume_bytes : WasmByteVecT*) : WasiFilesystemT*
+    fun wasi_filesystem_delete(_ptr : WasiFilesystemT*)
     fun wasi_get_wasi_version(module : WasmModuleT) : WasiVersionT
     enum WasiVersionT
       InvalidVersion = -1
       Latest         =  0
       Snapshot0      =  1
       Snapshot1      =  2
+      Wasix32V1      =  3
+      Wasix64V1      =  4
     end
-    fun wasm_config_canonicalize_nans(config : WasmConfigT, enable : Bool)
+    fun wasm_config_sys_canonicalize_nans(config : WasmConfigT, enable : Bool)
     fun wasm_config_push_middleware(config : WasmConfigT, middleware : WasmerMiddlewareT)
-    fun wasm_config_set_compiler(config : WasmConfigT, compiler : WasmerCompilerT)
-    enum WasmerCompilerT
+    # compiler + engine replaced by unified backend
+    fun wasm_config_set_backend(config : WasmConfigT, backend : WasmerBackendT)
+    enum WasmerBackendT
       Cranelift  = 0
       Llvm       = 1
       Singlepass = 2
-    end
-    fun wasm_config_set_engine(config : WasmConfigT, engine : WasmerEngineT)
-    enum WasmerEngineT
-      Universal = 0
-      Dylib     = 1
-      Staticlib = 2
+      Headless   = 3
+      V8         = 4
+      Wasmi      = 5
+      Wamr       = 6
+      Jsc        = 7
     end
     fun wasm_config_set_features(config : WasmConfigT, features : WasmerFeaturesT)
     fun wasm_config_set_target(config : WasmConfigT, target : WasmerTargetT)
@@ -527,18 +541,33 @@ module Wasmer
     fun wasmer_cpu_features_new : WasmerCpuFeaturesT
     fun wasmer_features_bulk_memory(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_delete(_features : WasmerFeaturesT)
+    # new feature flags
+    fun wasmer_features_exceptions(features : WasmerFeaturesT, enable : Bool) : Bool
+    fun wasmer_features_extended_const(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_memory64(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_module_linking(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_multi_memory(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_multi_value(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_new : WasmerFeaturesT
     fun wasmer_features_reference_types(features : WasmerFeaturesT, enable : Bool) : Bool
+    fun wasmer_features_relaxed_simd(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_simd(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_tail_call(features : WasmerFeaturesT, enable : Bool) : Bool
     fun wasmer_features_threads(features : WasmerFeaturesT, enable : Bool) : Bool
-    fun wasmer_is_compiler_available(compiler : WasmerCompilerT) : Bool
-    fun wasmer_is_engine_available(engine : WasmerEngineT) : Bool
+    fun wasmer_features_wide_arithmetic(features : WasmerFeaturesT, enable : Bool) : Bool
+    # availability check unified
+    fun wasmer_is_backend_available(backend : WasmerBackendT) : Bool
     fun wasmer_is_headless : Bool
+    # diagnostic/tracing setup
+    fun wasmer_setup_tracing(verbosity_level : LibC::Int, use_color : Bool)
+    # wasmer_funcenv for host functions with environment
+    struct WasmerFuncenvT
+      inner : Void*
+    end
+    fun wasmer_funcenv_new(store : WasmStoreT, data : Void*) : WasmerFuncenvT*
+    fun wasmer_funcenv_delete(_funcenv : WasmerFuncenvT*)
+    # wasmer_module_new creates a module from an engine directly
+    fun wasmer_module_new(engine : WasmEngineT, bytes : WasmByteVecT*) : WasmModuleT
     fun wasmer_last_error_length : LibC::Int
     fun wasmer_last_error_message(buffer : LibC::Char*, length : LibC::Int) : LibC::Int
     fun wasmer_metering_as_middleware(metering : WasmerMeteringT) : WasmerMiddlewareT

@@ -1,15 +1,16 @@
 require "./lib"
 
 module Wasmer
-  # Represents possible compiler types
+  # Represents possible compiler/backend types.
+  # In Wasmer 7, compilers and engines were unified into a single `backend` concept.
   enum CompilerKind
     Cranelift
     LLVM
     Singlepass
 
-    # Checks that the given compiler is available in this current version of wasmer-crystal
+    # Checks that the given compiler backend is available in this current version of wasmer-crystal
     def available?
-      LibWasmer.wasmer_is_compiler_available(to_c)
+      LibWasmer.wasmer_is_backend_available(to_c)
     end
 
     def to_s(io : IO)
@@ -18,19 +19,21 @@ module Wasmer
 
     # :nodoc:
     protected def to_c
-      LibWasmer::WasmerCompilerT.from_value(self.value)
+      LibWasmer::WasmerBackendT.from_value(self.value)
     end
   end
 
-  # Represents the possible engine types
+  # Represents the possible engine/backend types.
+  # In Wasmer 7, the engine concept was replaced by backends. `Universal` and `Dylib`
+  # map to the Cranelift backend for backward compatibility.
   enum EngineKind
     Universal
     Dylib
     Staticlib
 
-    # Checks that the given engine is available in this current version of wasmer-crystal
+    # Checks that the Cranelift backend is available (replaces per-engine availability in Wasmer 7)
     def available?
-      LibWasmer.wasmer_is_engine_available(to_c)
+      LibWasmer.wasmer_is_backend_available(LibWasmer::WasmerBackendT::Cranelift)
     end
 
     def to_s(io : IO)
@@ -38,8 +41,9 @@ module Wasmer
     end
 
     # :nodoc:
+    # In Wasmer 7, Universal/Dylib/Staticlib engines map to Cranelift backend
     protected def to_c
-      LibWasmer::WasmerEngineT.from_value(self.value)
+      LibWasmer::WasmerBackendT::Cranelift
     end
   end
 
@@ -48,46 +52,40 @@ module Wasmer
       @ptr = LibWasmer.wasm_config_new
     end
 
-    # Sets the engine to Universal. Will raise if `Universal` engine is not
-    # supported by current binding.
-    # Check `EngineKind.available?` to check the availability
+    # Sets the backend to Cranelift (replaces Universal engine in Wasmer 7).
+    # Will raise if Cranelift backend is not supported.
     def use_universal_engine
-      set_engine(EngineKind::Universal)
+      set_backend(LibWasmer::WasmerBackendT::Cranelift)
     end
 
-    # Sets the engine to Dylib. Will raise if `Dylib` engine is not
-    # supported by current binding.
-    # Check `EngineKind.available?` to check the availability
+    # Sets the backend to Cranelift (replaces Dylib engine in Wasmer 7).
+    # Will raise if Cranelift backend is not supported.
     def use_dylib_engine
-      set_engine(EngineKind::Dylib)
+      set_backend(LibWasmer::WasmerBackendT::Cranelift)
     end
 
-    # Sets the engine to Staticlib. Will raise if `Staticlib` engine is not
-    # supported by current binding.
-    # Check `EngineKind.available?` to check the availability
+    # Sets the backend to Cranelift (replaces Staticlib engine in Wasmer 7).
+    # Will raise if Cranelift backend is not supported.
     def use_staticlib_engine
-      set_engine(EngineKind::Staticlib)
+      set_backend(LibWasmer::WasmerBackendT::Cranelift)
     end
 
-    # Sets the compiler to Cranelift. Will raise if `Cranelift` compiler is not
-    # supported by current binding.
-    # Check `CompilerKind.available?` to check the availability
+    # Sets the backend to Cranelift. Will raise if not supported.
+    # Check `CompilerKind::Cranelift.available?` to check the availability
     def use_cranelift_compiler
-      set_compiler(CompilerKind::Cranelift)
+      set_backend(LibWasmer::WasmerBackendT::Cranelift)
     end
 
-    # Sets the compiler to LLVM. Will raise if `llvm` compiler is not
-    # supported by current binding.
-    # Check `CompilerKind.available?` to check the availability
+    # Sets the backend to LLVM. Will raise if not supported.
+    # Check `CompilerKind::LLVM.available?` to check the availability
     def use_llvm_compiler
-      set_compiler(CompilerKind::LLVM)
+      set_backend(LibWasmer::WasmerBackendT::Llvm)
     end
 
-    # Sets the compiler to Singlepass. Will raise if `Singlepass` compiler is not
-    # supported by current binding.
-    # Check `CompilerKind.available?` to check the availability
+    # Sets the backend to Singlepass. Will raise if not supported.
+    # Check `CompilerKind::Singlepass.available?` to check the availability
     def use_singlepass_compiler
-      set_compiler(CompilerKind::Singlepass)
+      set_backend(LibWasmer::WasmerBackendT::Singlepass)
     end
 
     # Use a specific target for doing cross-compilation
@@ -96,15 +94,9 @@ module Wasmer
       self
     end
 
-    private def set_engine(kind : EngineKind)
-      raise "This version doesn't include #{kind.to_s.capitalize} engine" unless kind.available?
-      LibWasmer.wasm_config_set_engine(self, kind.to_c)
-      self
-    end
-
-    private def set_compiler(kind : CompilerKind)
-      raise "This version doesn't include #{kind.to_s.capitalize} compiler" unless kind.available?
-      LibWasmer.wasm_config_set_compiler(self, kind.to_c)
+    private def set_backend(backend : LibWasmer::WasmerBackendT)
+      raise "This backend (#{backend}) is not available in this build" unless LibWasmer.wasmer_is_backend_available(backend)
+      LibWasmer.wasm_config_set_backend(self, backend)
       self
     end
 

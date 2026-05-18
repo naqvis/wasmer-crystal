@@ -24,12 +24,22 @@ module Wasmer
 
       @instance = LibWasmer.wasm_instance_new(mod.store, mod, pointerof(externs), out trap)
 
-      raise TrapException.new(Trap.new(trap)) if trap.null? && @instance.null?
+      if @instance.null?
+        Wasmer.check_error
+        raise WasmerError.new("Failed to instantiate module")
+      end
       @exports = Exports.new(@instance, mod)
     end
 
     def self.new(mod : Module)
       new(mod, ImportObject.new)
+    end
+
+    # :nodoc:
+    # Used internally by the WASI environment to wrap an already-created raw instance.
+    protected def initialize(raw : LibWasmer::WasmInstanceT, mod : Module)
+      @instance = raw
+      @exports = Exports.new(@instance, mod)
     end
 
     # :nodoc:

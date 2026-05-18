@@ -137,7 +137,13 @@ module Wasmer
 
     # Sets the `Global`'s value
     # It takes two arguments, value as a native Crystal value
-    def set(value) : Nil
+    def set(value : Value) : Nil
+      raise WasmerError.new("The global variable is not mutable, cannot set a new value") if type.mutability == Immutable
+      v = value.to_unsafe
+      LibWasmer.wasm_global_set(self, pointerof(v))
+    end
+
+    def set(value : Number) : Nil
       raise WasmerError.new("The global variable is not mutable, cannot set a new value") if type.mutability == Immutable
       v = Value.new(value).to_unsafe
       LibWasmer.wasm_global_set(self, pointerof(v))

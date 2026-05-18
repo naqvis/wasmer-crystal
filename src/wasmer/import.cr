@@ -22,7 +22,9 @@ module Wasmer
         namespace = imp.mod_name
         name = imp.name
 
-        raise WasmerError.new("Missing import: '#{namespace}'.'#{name}'") unless v = @externs[namespace][name]?
+        unless (ns = @externs[namespace]?) && (v = ns[name]?)
+          raise WasmerError.new("Missing import: '#{namespace}'.'#{name}'")
+        end
         vals << v.to_extern.to_unsafe
       end
       LibWasmer.wasm_extern_vec_new(pointerof(ret), vals.size, vals.to_unsafe) unless vals.empty?

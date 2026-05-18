@@ -39,20 +39,23 @@ module Wasmer
       Wasmer.check_error if @ptr.null?
     end
 
-    # Validates a new `Module` against the given store.
-    def validate(@store : Store, bytes : Bytes) : Nil
-      wasm = Wasmer.wat2wasm(String.new(bytes))
+    # :nodoc:
+    protected def initialize(@ptr : LibWasmer::WasmModuleT, @store : Store)
+    end
+
+    # Validates bytes against the given store.
+    def self.validate(store : Store, bytes : Bytes) : Bool
       wasm_vec = LibWasmer::WasmByteVecT.new
-      wasm_vec.size = wasm.bytesize
-      wasm_vec.data = wasm.to_unsafe
-      ret = LibWasmer.wasm_module_validate(@store, pointerof(wasm_vec))
-      Wasmer.check_error unless ret
+      wasm_vec.size = bytes.bytesize
+      wasm_vec.data = bytes.to_unsafe
+      LibWasmer.wasm_module_validate(store, pointerof(wasm_vec))
     end
 
     # Returns the Module's name
     # Note: This is not part of the standard Wasm C API. It is Wasmer specific
-    def name : String
+    def name : String?
       LibWasmer.wasmer_module_name(self, out name)
+      return nil if name.data.null? || name.size == 0
       ret = String.new(name.data)[...name.size]
       LibWasmer.wasm_byte_vec_delete(pointerof(name))
       ret
@@ -76,13 +79,13 @@ module Wasmer
     end
 
     # Deserializes bytes to a Module
-    def self.deserialize(store : Store, bytes : Bytes) : Module
+    def self.deserialize(store : Store, bytes : Bytes) : Module?
       vec = LibWasmer::WasmByteVecT.new
       vec.size = bytes.bytesize
       vec.data = bytes.to_unsafe
-      ptr = LibWasmer.wasm_module_deserialize(self, pointerof(vec))
-      Wasmer.check_error if ptr.null?
-      new(ptr)
+      ptr = LibWasmer.wasm_module_deserialize(store, pointerof(vec))
+      return nil if ptr.null?
+      new(ptr, store)
     end
 
     # :nodoc:

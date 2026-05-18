@@ -35,6 +35,22 @@ module Wasmer
       Trace.new(self)
     end
 
+    # Returns true if this trap represents a WASI proc_exit call.
+    # proc_exit is delivered as a trap with a message like
+    # "WASI exited with code: ExitCode::0".
+    def wasi_exit? : Bool
+      message.includes?("WASI exited with code")
+    end
+
+    # Returns the WASI exit code if this trap is a proc_exit, nil otherwise.
+    def wasi_exit_code : Int32?
+      msg = message
+      return nil unless msg.includes?("WASI exited with code")
+      # Parse "WASI exited with code: ExitCode::N" or similar patterns
+      match = msg.match(/ExitCode::(\d+)/)
+      match ? match[1].to_i : nil
+    end
+
     # :nodoc:
     def to_unsafe
       @ptr

@@ -18,7 +18,9 @@ module Wasmer
 
       mod_exports = _module.exports
 
-      0.upto(@ptr.size - 1) do |n|
+      return if @ptr.size == 0
+
+      0.upto(@ptr.size.to_i - 1) do |n|
         exp = Extern.new(first[n])
         @exports[mod_exports[n].name] = exp
       end
